@@ -1,0 +1,8 @@
+{
+  "name": "xyh-houdun",
+  "version": "1.0.0",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "leancloud-storage": "^4.13.2"
+  }
+}
