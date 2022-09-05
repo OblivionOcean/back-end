@@ -2,6 +2,17 @@ const Blog = require('./blog.js');
 const User = require('./user.js');
 const http = require('http');
 const url = require('url');
+const AV = require("leancloud-storage");
+
+if (process.env.serverURL) {
+    AV.init({
+        appId: process.env.appId, appKey: process.env.appKey
+    });
+} else {
+    AV.init({
+        appId: process.env.appId, appKey: process.env.appKey, serverURL: process.env.serverURL
+    });
+}
 
 http.createServer(function (req, res) {
     if (req.headers.origin){
