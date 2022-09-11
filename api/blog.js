@@ -43,7 +43,9 @@ function getList(req, res) {
                     text: user[i].get('text'),
                     tags: user[i].get('tags'),
                     uid: user[i].get('uid'),
-                    pid: user[i].get('pid')
+                    pid: user[i].get('pid'),
+                    look: user[i].get('look'),
+                    avatar: user[0].get('avatar')
                 });
             }
             res.end(JSON.stringify({status: true, msg: `共找到${user.length}条`, code: 200, data: data}));
@@ -54,9 +56,8 @@ function getList(req, res) {
 }
 
 function setPost(req, res) {
-    res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-    User.auth(req).then(function (response) {
-        if (response.data.join) {
+    User.fauth(req).then(function (response) {
+        if (response.data.isjoin) {
             pid = res.getQueryVariable('pid', '');
             title = res.getQueryVariable('title', '');
             text = res.getQueryVariable('text', '');
@@ -68,11 +69,11 @@ function setPost(req, res) {
                 tags = res.getQueryVariable('tags', 'ALL').split(',');
             }
             if (res.getQueryVariable('categories', 'ALL') === 'ALL') {
-                categories = [];
-            } else if (res.getQueryVariable('categories', 'ALL').indexOf(',') == -1) {
-                categories = [res.getQueryVariable('categories', 'ALL')];
+                category = [];
+            } else if (res.getQueryVariable('category', 'ALL').indexOf(',') == -1) {
+                category = [res.getQueryVariable('category', 'ALL')];
             } else {
-                categories = res.getQueryVariable('categories', 'ALL').split(',');
+                category = res.getQueryVariable('category', 'ALL').split(',');
             }
             // 声明 class
             const query = new AV.Query('post');
@@ -84,13 +85,16 @@ function setPost(req, res) {
                 postobj.set('title', title);
                 postobj.set('text', text);
                 postobj.set('tags', tags);
-                postobj.set('uid', uid);
+                postobj.set('uid', response.data.uid);
                 postobj.set('category', category);
                 postobj.set('pid', pid);
                 postobj.set('look', 0);
+                postobj.set('avatar', response.data.avatar);
                 postobj.save().then(() => {
+                    res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                     res.end(JSON.stringify({state: true, code: 200, msg: '保存成功', pid: pid}));
                 }, (error) => {
+                    res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                     res.end(JSON.stringify({state: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                 });
             } else {
@@ -100,14 +104,20 @@ function setPost(req, res) {
                         postobj.set('title', title);
                         postobj.set('text', text);
                         postobj.set('tags', tags);
-                        postobj.set('uid', uid);
+                        postobj.set('uid', response.data.uid);
                         postobj.set('category', category);
+                        postobj.set('pid', pid);
+                        postobj.set('look', 0);
+                        postobj.set('avatar', response.data.avatar);
                         postobj.save().then(() => {
+                            res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                             res.end(JSON.stringify({state: true, code: 200, msg: '保存成功', pid: pid}));
                         }, (error) => {
+                            res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                             res.end(JSON.stringify({state: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                         });
                     } else {
+                        res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                         res.end(JSON.stringify({status: false, msg: '没有这样的文章哦！', code: 500}));
                     }
                 });
@@ -117,7 +127,9 @@ function setPost(req, res) {
             res.end('无权限！');
         }
     }).catch(function (err) {
-        res.end(err);
+        res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify(err));
+        console.log(err)
     })
 }
 
@@ -136,7 +148,8 @@ function Post(req, res) {
                     tags: user[0].get('tags'),
                     uid: user[0].get('uid'),
                     pid: user[0].get('pid'),
-                    look: user[0].get('look')
+                    look: user[0].get('look'),
+                    avatar: user[0].get('avatar')
                 }
             }));
             const Pl = AV.Object.createWithoutData('post', user[0].id);

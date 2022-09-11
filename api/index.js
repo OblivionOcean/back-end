@@ -15,15 +15,6 @@ if (process.env.serverURL) {
 }
 
 http.createServer(function (req, res) {
-    if (req.headers.origin){
-        originUrl=req.headers.origin.split('.')
-        res.setHeader('Access-Control-Allow-Credentials', true);
-        if(originUrl[originUrl.length-1]=='top'&&originUrl[originUrl.length-2]=='oblivionocean') {
-            res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
-        }
-    } else {
-        res.setHeader('Access-Control-Allow-Origin', '*')
-    }
     res.cookie = function (id, value, json = {path: '/', maxAge: null, expires: null, domain: null}) {
         if (json.maxAge) {
             json.maxAge = '; max-age=' + json.maxAge;
@@ -49,7 +40,7 @@ http.createServer(function (req, res) {
         this.setHeader('set-cookie', id + '=; maxAge=0; path=' + path);
     }
     req.url = url.parse(req.url)
-    res.getQueryVariable=function(variable, err) {
+    res.getQueryVariable = function (variable, err) {
         if (req.url.query) {
             var vars = req.url.query.split("&");
             for (var i = 0; i < vars.length; i++) {
@@ -61,6 +52,7 @@ http.createServer(function (req, res) {
         }
         return (err);
     }
+
     function cookie2json() {
         req.cookie = {}
         if (req.headers.cookie && req.headers.cookie.indexOf('=') != -1) {
@@ -74,28 +66,58 @@ http.createServer(function (req, res) {
             }
         }
     }
+
     cookie2json()
 
-    if (req.url.pathname === '/blog/getlist') {
-        Blog.getList(req, res);
-    } else if (req.url.pathname === '/blog/set') {
-        Blog.setPost(req, res)
-    } else if (req.url.pathname === '/blog/get') {
-        Blog.getPost(req, res);
-    } else if (req.url.pathname === '/user/login') {
-        User.login(req, res)
-    } else if (req.url.pathname === '/user/logon') {
-        User.logon(req, res)
-    } else if (req.url.pathname === '/user/logout') {
-        res.clearCookie('key');
-    } else if (req.url.pathname === '/user/user') {
-        User.Uqueru(req, res)
-    } else if (req.url.pathname === '/user/auth') {
-        User.auth(req, res)
+    path = {
+        '/blog/getlist': Blog.getList,
+        '/blog/set': Blog.setPost,
+        '/blog/get': Blog.getPost,
+        '/user/login': User.login,
+        '/user/logon': User.logon,
+        '/user/user': User.Uqueru,
+        '/user/auth': User.auth
+    };
+    console.log(req.url.pathname[req.url.pathname.length - 1], path[req.url.pathname.substring(0, req.url.pathname.length - 1)], path)
+    if (req.url.pathname[req.url.pathname.length - 1] == '/') {
+        if (req.headers.origin) {
+            originUrl = req.headers.origin.split('.')
+            res.setHeader('Access-Control-Allow-Credentials', true);
+            if (originUrl[originUrl.length-1]==='top'&& originUrl[originUrl.length-2]==='oblivionocean') {
+                res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+            } else {
+                res.setHeader('Access-Control-Allow-Origin', 'https://www.oblivionocean.top')
+            }
+            console.log(originUrl,originUrl[originUrl.length-1]==='top'&& originUrl[originUrl.length-2]==='oblivionocean')
+        } else {
+            res.setHeader('Access-Control-Allow-Origin', '*')
+        }
+        if (!path[req.url.pathname.substring(0, req.url.pathname.length - 2)]) {
+            res.writeHead(404, {'Content-Type': 'text/html;charset=utf-8'});
+            res.write('<title>404 Not Found</title><style>h1,p {text-align:center;}</style><h1>404 Not Found</h1><hr><p>玄云海</p>');
+            res.end();
+        } else {
+            path[req.url.pathname.substring(0, req.url.pathname.length - 2)](req, res)
+        }
     } else {
-        // url参数获取
-        res.writeHead(404, {'Content-Type': 'text/html;charset=utf-8'});
-        res.write('<title>404 Not Found</title><style>h1,p {text-align:center;}</style><h1>404 Not Found</h1><hr><p>玄云海</p>');
-        res.end();
+        if (req.headers.origin) {
+            originUrl = req.headers.origin.split('.')
+            res.setHeader('Access-Control-Allow-Credentials', true);
+            if (originUrl[originUrl.length-1]==='top'&& originUrl[originUrl.length-2]==='oblivionocean') {
+                res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+            } else {
+                res.setHeader('Access-Control-Allow-Origin', 'https://www.oblivionocean.top')
+            }
+            console.log(originUrl,originUrl[originUrl.length-1]==='top'&& originUrl[originUrl.length-2]==='oblivionocean')
+        } else {
+            res.setHeader('Access-Control-Allow-Origin', '*')
+        }
+        if (!path[req.url.pathname]) {
+            res.writeHead(404, {'Content-Type': 'text/html;charset=utf-8'});
+            res.write('<title>404 Not Found</title><style>h1,p {text-align:center;}</style><h1>404 Not Found</h1><hr><p>玄云海</p>');
+            res.end();
+        } else {
+            path[req.url.pathname](req, res)
+        }
     }
 }).listen(80);

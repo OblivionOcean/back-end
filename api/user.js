@@ -27,7 +27,7 @@ function auth(req, res) {
                         name: user[0].get('name'),
                         avatar: user[0].get('avatar'),
                         admin: user[0].get('admin'),
-                        join: user[0].get('join'),
+                        isjoin: user[0].get('join'),
                         lv: user[0].get('lv')
                     }
                 }));
@@ -38,6 +38,24 @@ function auth(req, res) {
     } else {
         res.end(JSON.stringify({status: false, msg: '用户未登录', code: 403}))
     }
+}
+
+function fauth(req) {
+    return new Promise((resolve, reject) => {
+        if (req.cookie.key) {
+            const query = new AV.Query('UserList');
+            query.equalTo('key', req.cookie.key);
+            query.find().then((user) => {
+                if (user.length > 0) {
+                    resolve({status: true, msg: '用户已登录', code: 200, data: {email: user[0].get('email'), key: user[0].get('key'), uid: user[0].get('id'), coreUser: user[0].get('coreUser'), name: user[0].get('name'), avatar: user[0].get('avatar'), admin: user[0].get('admin'), isjoin: user[0].get('join'), lv: user[0].get('lv')}});
+                } else {
+                    reject({status: false, msg: '用户凭证异常', code: 403});
+                }
+            });
+        } else {
+            reject({status: false, msg: '用户未登录', code: 403})
+        }
+    });
 }
 
 function Uqueru(req, res) {
@@ -117,10 +135,10 @@ function logon(req, res) {
                         let User = AV.Object.extend('UserList');
                         let uSer = new User();
                         uSer.set('email', email);
-                        uSer.set('key', crypto.createHash('sha512').update(user.length + 1 + '|' + password).digest("hex"));
+                        uSer.set('key', crypto.createHash('sha512').update(count + 1 + '|' + password).digest("hex"));
                         uSer.set('id', count + 1);
                         uSer.save().then((todo) => {
-                            res.cookie('key', crypto.createHash('sha512').update(user.length + 1 + '|' + password).digest("hex"))
+                            res.cookie('key', crypto.createHash('sha512').update(count + 1 + '|' + password).digest("hex"))
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                             res.end(JSON.stringify({
                                 status: true,
@@ -146,5 +164,5 @@ function logon(req, res) {
 }
 
 module.exports = {
-    logon: logon, login: login, auth: auth, Uqueru: Uqueru
+    logon: logon, login: login, auth: auth, Uqueru: Uqueru, fauth:fauth
 };
