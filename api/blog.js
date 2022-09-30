@@ -124,7 +124,7 @@ function setPost(req, res) {
             }
         } else {
             res.writeHead(403, {'Content-Type': 'application/json;charset=utf-8'});
-            res.end('无权限！');
+            res.end({status: false, msg: '无权限！', code: 403});
         }
     }).catch(function (err) {
         res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
