@@ -104,7 +104,6 @@ function setPost(req, res) {
                         postobj.set('title', title);
                         postobj.set('text', text);
                         postobj.set('tags', tags);
-                        postobj.set('uid', response.data.uid);
                         postobj.set('category', category);
                         postobj.set('pid', pid);
                         postobj.set('look', 0);
