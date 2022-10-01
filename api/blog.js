@@ -58,7 +58,7 @@ function getList(req, res) {
 function setPost(req, res) {
     User.fauth(req).then(function (response) {
         if (response.data.isjoin) {
-            pid = res.getQueryVariable('pid', '');
+            pid = res.getQueryVariable('pid', undefined);
             title = res.getQueryVariable('title', '');
             text = res.getQueryVariable('text', '');
             if (res.getQueryVariable('tags', 'ALL') === 'ALL') {
@@ -87,7 +87,7 @@ function setPost(req, res) {
                 postobj.set('tags', tags);
                 postobj.set('uid', response.data.uid);
                 postobj.set('category', category);
-                postobj.set('pid', pid);
+                postobj.set('pid', parseInt(pid));
                 postobj.set('look', 0);
                 postobj.set('avatar', response.data.avatar);
                 postobj.save().then(() => {
@@ -105,7 +105,7 @@ function setPost(req, res) {
                         postobj.set('text', text);
                         postobj.set('tags', tags);
                         postobj.set('category', category);
-                        postobj.set('pid', pid);
+                        postobj.set('pid', parseInt(pid));
                         postobj.set('look', 0);
                         postobj.save().then(() => {
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
