@@ -107,7 +107,6 @@ function setPost(req, res) {
                         postobj.set('category', category);
                         postobj.set('pid', pid);
                         postobj.set('look', 0);
-                        postobj.set('avatar', response.data.avatar);
                         postobj.save().then(() => {
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                             res.end(JSON.stringify({state: true, code: 200, msg: '保存成功', pid: pid}));
