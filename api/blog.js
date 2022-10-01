@@ -101,7 +101,7 @@ function setPost(req, res) {
                 query.equalTo('pid', parseInt(pid));
                 query.find().then((user) => {
                     if (user.length > 0) {
-                        var postobj = AV.Object.createWithoutData('post', user[0]);
+                        var postobj = AV.Object.createWithoutData('post', user[0].id);
                         postobj.set('title', title);
                         postobj.set('text', text);
                         postobj.set('tags', tags);
