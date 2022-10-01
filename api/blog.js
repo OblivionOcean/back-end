@@ -98,6 +98,7 @@ function setPost(req, res) {
                     res.end(JSON.stringify({state: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                 });
             } else {
+                query.equalTo('pid', parseInt(pid));
                 query.find().then((user) => {
                     if (user.length > 0) {
                         var postobj = AV.Object.createWithoutData('post', user[0]);
