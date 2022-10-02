@@ -58,7 +58,7 @@ function getList(req, res) {
 function setPost(req, res) {
     User.fauth(req).then(function (response) {
         if (response.data.isjoin) {
-            pid = res.getQueryVariable('pid', '');
+            pid = res.getQueryVariable('pid', undefined);
             title = res.getQueryVariable('title', '');
             text = res.getQueryVariable('text', '');
             if (res.getQueryVariable('tags', 'ALL') === 'ALL') {
@@ -87,7 +87,7 @@ function setPost(req, res) {
                 postobj.set('tags', tags);
                 postobj.set('uid', response.data.uid);
                 postobj.set('category', category);
-                postobj.set('pid', pid);
+                postobj.set('pid', parseInt(pid));
                 postobj.set('look', 0);
                 postobj.set('avatar', response.data.avatar);
                 postobj.save().then(() => {
@@ -98,17 +98,16 @@ function setPost(req, res) {
                     res.end(JSON.stringify({status: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                 });
             } else {
+                query.equalTo('pid', parseInt(pid));
                 query.find().then((user) => {
                     if (user.length > 0) {
-                        var postobj = AV.Object.createWithoutData('post', user[0]);
+                        var postobj = AV.Object.createWithoutData('post', user[0].id);
                         postobj.set('title', title);
                         postobj.set('text', text);
                         postobj.set('tags', tags);
-                        postobj.set('uid', response.data.uid);
                         postobj.set('category', category);
-                        postobj.set('pid', pid);
+                        postobj.set('pid', parseInt(pid));
                         postobj.set('look', 0);
-                        postobj.set('avatar', response.data.avatar);
                         postobj.save().then(() => {
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                             res.end(JSON.stringify({status: true, code: 200, msg: '保存成功', pid: pid}));
