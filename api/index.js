@@ -14,7 +14,7 @@ if (process.env.serverURL) {
     });
 }
 
-http.createServer(function (req, res) {
+http.createServer(function (req, res)   {
     res.cookie = function (id, value, json = {path: '/', maxAge: null, expires: null, domain: null}) {
         if (json.maxAge) {
             json.maxAge = '; max-age=' + json.maxAge;

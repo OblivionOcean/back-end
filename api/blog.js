@@ -92,10 +92,10 @@ function setPost(req, res) {
                 postobj.set('avatar', response.data.avatar);
                 postobj.save().then(() => {
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                    res.end(JSON.stringify({state: true, code: 200, msg: '保存成功', pid: pid}));
+                    res.end(JSON.stringify({status: true, code: 200, msg: '保存成功', pid: pid}));
                 }, (error) => {
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                    res.end(JSON.stringify({state: false, code: 400, msg: '保存失败', pid: pid, error: error}));
+                    res.end(JSON.stringify({status: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                 });
             } else {
                 query.find().then((user) => {
@@ -111,10 +111,10 @@ function setPost(req, res) {
                         postobj.set('avatar', response.data.avatar);
                         postobj.save().then(() => {
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                            res.end(JSON.stringify({state: true, code: 200, msg: '保存成功', pid: pid}));
+                            res.end(JSON.stringify({status: true, code: 200, msg: '保存成功', pid: pid}));
                         }, (error) => {
                             res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                            res.end(JSON.stringify({state: false, code: 400, msg: '保存失败', pid: pid, error: error}));
+                            res.end(JSON.stringify({status: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                         });
                     } else {
                         res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
