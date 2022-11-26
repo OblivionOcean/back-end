@@ -3,11 +3,11 @@ const crypto = require('crypto');
 //环境变量
 if (process.env.serverURL) {
     AV.init({
-        appId: process.env.appId, appKey: process.env.appKey
+        appId: process.env.appId, appKey: process.env.appKey, serverURL: process.env.serverURL
     });
 } else {
     AV.init({
-        appId: process.env.appId, appKey: process.env.appKey, serverURL: process.env.serverURL
+        appId: process.env.appId, appKey: process.env.appKey
     });
 }
 
@@ -59,8 +59,8 @@ function fauth(req) {
 }
 
 function Uqueru(req, res) {
-    if (getQueryVariable('uid', null)) {
-        uid = res.getQueryVariable('uid', null);
+    if (req.body.fields.uid) {
+        uid = req.body.fields.uid;
         const query = new AV.Query('UserList');
         query.equalTo('id', parseInt(uid));
         query.find().then((user) => {
@@ -92,9 +92,9 @@ function Uqueru(req, res) {
 
 function login(req, res) {
     const query = new AV.Query('UserList');
-    if (res.getQueryVariable('id', null) && res.getQueryVariable('password', null)) {
-        id = res.getQueryVariable('id', null)
-        password = res.getQueryVariable('password', null);
+    if (req.body.fields.id && req.body.fields.password) {
+        id = req.body.fields.id;
+        password = req.body.fields.password;
         if (id.indexOf('@') > -1 && id.indexOf('.') > -1) {
             query.equalTo('email', id);
         } else {
@@ -122,9 +122,9 @@ function login(req, res) {
 }
 
 function logon(req, res) {
-    if (res.getQueryVariable('email', null) && res.getQueryVariable('password', null)) {
-        email = res.getQueryVariable('email', null);
-        password = res.getQueryVariable('password', null);
+    if (req.body.fields.email && req.body.fields.password) {
+        email = req.body.fields.email;
+        password = req.body.fields.password;
         const query = new AV.Query('UserList');
         query.equalTo('email', email);
         query.find().then((user) => {

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "dependencies": {
     "crypto": "^1.0.1",
+    "formidable": "^2.0.1",
     "leancloud-storage": "^4.13.2",
-    "mysql": "^2.18.1"
+    "mime": "^3.0.0",
+    "simplest-server": "^1.0.0"
   }
 }
