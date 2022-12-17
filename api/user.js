@@ -1,111 +1,84 @@
-const AV = require('leancloud-storage');
 const crypto = require('crypto');
-//环境变量
-if (process.env.serverURL) {
-    AV.init({
-        appId: process.env.appId, appKey: process.env.appKey, serverURL: process.env.serverURL
-    });
-} else {
-    AV.init({
-        appId: process.env.appId, appKey: process.env.appKey
-    });
-}
+const db = require('./db')
 
-function auth(req, res) {
-    res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-    if (req.cookie.key) {
-        const query = new AV.Query('UserList');
-        query.equalTo('key', req.cookie.key);
-        query.find().then((user) => {
-            if (user.length > 0) {
-                res.end(JSON.stringify({
-                    status: true, msg: '用户已登录', code: 200, data: {
-                        email: user[0].get('email'),
-                        key: user[0].get('key'),
-                        uid: user[0].get('id'),
-                        coreUser: user[0].get('coreUser'),
-                        name: user[0].get('name'),
-                        avatar: user[0].get('avatar'),
-                        admin: user[0].get('admin'),
-                        isjoin: user[0].get('join'),
-                        lv: user[0].get('lv')
-                    }
-                }));
-            } else {
-                res.end(JSON.stringify({status: false, msg: '用户凭证异常', code: 403}));
-            }
-        });
-    } else {
-        res.end(JSON.stringify({status: false, msg: '用户未登录', code: 403}))
-    }
-}
+//环境变量
 
 function fauth(req) {
     return new Promise((resolve, reject) => {
         if (req.cookie.key) {
-            const query = new AV.Query('UserList');
-            query.equalTo('key', req.cookie.key);
-            query.find().then((user) => {
-                if (user.length > 0) {
-                    resolve({status: true, msg: '用户已登录', code: 200, data: {email: user[0].get('email'), key: user[0].get('key'), uid: user[0].get('id'), coreUser: user[0].get('coreUser'), name: user[0].get('name'), avatar: user[0].get('avatar'), admin: user[0].get('admin'), isjoin: user[0].get('join'), lv: user[0].get('lv')}});
+            db.find('userls', '*', "key='" + req.cookie.key + "'").then(function (sql) {
+                if (sql.rows[0]) {
+                    resolve({
+                        status: true, msg: '用户已登录', code: 200, data: sql.rows[0]
+                    });
                 } else {
-                    reject({status: false, msg: '用户凭证异常', code: 403});
+                    reject({status: false, msg: '用户凭证异常', code: 200});
                 }
+            }).catch(function (err) {
+                console.log(err)
+                reject({
+                    status: false,
+                    msg: '查询失败,数据库错误!',
+                    code: 500,
+                    err: (typeof err == 'string') ? err.toString() : err
+                });
             });
         } else {
-            reject({status: false, msg: '用户未登录', code: 403})
+            reject({status: false, msg: '用户未登录', code: 200})
         }
+
     });
 }
 
+function auth(req, res) {
+    fauth(req).then(function (data) {
+        res.writeHead(data['code'], {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify(data));
+    }).catch(function (err) {
+        res.writeHead(err['code'], {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify(err));
+    })
+}
+
 function Uqueru(req, res) {
-    if (req.body.fields.uid) {
-        uid = req.body.fields.uid;
-        const query = new AV.Query('UserList');
-        query.equalTo('id', parseInt(uid));
-        query.find().then((user) => {
-            if (user.length > 0) {
+    if (req.body.fields.id) {
+        uid = req.body.fields.id;
+        db.find('userls', '*', "uid=" + uid).then(function (sql) {
+            if (sql.rows[0]) {
                 res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
+                sql.rows[0].key = undefined;
                 res.end(JSON.stringify({
-                    status: true, msg: '用户找到了', code: 200, data: {
-                        email: user[0].get('email'),
-                        uid: user[0].get('id'),
-                        coreUser: user[0].get('coreUser'),
-                        name: user[0].get('name'),
-                        avatar: user[0].get('avatar'),
-                        admin: user[0].get('admin'),
-                        join: user[0].get('join'),
-                        lv: user[0].get('lv')
-                    }
+                    status: true, msg: '用户找到了', code: 200, data: sql.rows[0]
                 }));
             } else {
                 res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                 res.end(JSON.stringify({status: false, msg: '不存在', code: 403}));
             }
+        }).catch(function (err) {
+            res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+            res.end(JSON.stringify({
+                status: false,
+                msg: '查询失败,数据库错误！',
+                code: 500,
+                err: (typeof err == 'string') ? err.toString() : err
+            }))
         });
     } else {
-        res.writeHead(500, {'Content-Type': 'text/html;charset=utf-8'});
-        res.write('<title>500 Sever error</title><style>h1,p {text-align:center;}</style><h1>500 Sever error</h1><hr><p>玄云海</p>');
-        res.end();
+        res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify({status: false, msg: '参数错误!', code: 500}));
     }
 }
 
 function login(req, res) {
-    const query = new AV.Query('UserList');
     if (req.body.fields.id && req.body.fields.password) {
         id = req.body.fields.id;
         password = req.body.fields.password;
-        if (id.indexOf('@') > -1 && id.indexOf('.') > -1) {
-            query.equalTo('email', id);
-        } else {
-            query.equalTo('id', id);
-        }
-        query.find().then((user) => {
-            if (user.length > 0) {
-                if (user[0].get('key') === crypto.createHash('sha512').update(user[0].get('id') + '|' + password).digest("hex")) {
-                    res.cookie('key', user[0].get('key'), {path: '/', domain: '.oblivionocean.top', maxAge: 604800000});
+        db.find('userls', '*', (/^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(id)) ? "email='" + id.toLowerCase() + "'" : 'uid=' + id).then(function (sql) {
+            if (sql.rows[0]) {
+                if (sql.rows[0]['key'] === crypto.createHash('sha512').update(sql.rows[0]['uid'].toString() + '|' + password).digest("hex")) {
+                    res.cookie('key', sql.rows[0]['key'], {path: '/', domain: '.oblivionocean.top', maxAge: 604800000});
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                    res.end(JSON.stringify({status: true, msg: '登录成功', code: 200, key: user[0].get('key')}));
+                    res.end(JSON.stringify({status: true, msg: '登录成功', code: 200, key: sql.rows[0]['key']}));
                 } else {
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                     res.end(JSON.stringify({status: false, msg: '密码错误', code: 1002}));
@@ -114,55 +87,65 @@ function login(req, res) {
                 res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                 res.end(JSON.stringify({status: false, msg: '用户不存在', code: 404}));
             }
+        }).catch(function (err) {
+            res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+            console.log(err)
+            res.end(JSON.stringify({status: false, msg: '查询失败,数据库错误！', code: 500, err: err}));
         });
     } else {
-        res.writeHead(500, {'Content-Type': 'text/html;charset=utf-8'});
-        res.end('<title>500 Sever error</title><style>h1,p {text-align:center;}</style><h1>500 Sever error</h1><hr><p>玄云海</p>');
+        res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify({status: false, msg: '参数错误!', code: 500}));
     }
 }
 
 function logon(req, res) {
     if (req.body.fields.email && req.body.fields.password) {
-        email = req.body.fields.email;
+        if (!/^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(req.body.fields.email)) {
+            res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
+            res.end({status: false, msg: '邮箱不正确！', code: 200});
+            return;
+        }
+        email = req.body.fields.email.toLowerCase();
         password = req.body.fields.password;
-        const query = new AV.Query('UserList');
-        query.equalTo('email', email);
-        query.find().then((user) => {
-            if (user.length === 0) {
-                query.find().then((user) => {
-                    const query2 = new AV.Query('UserList');
-                    query2.count().then((count) => {
-                        let User = AV.Object.extend('UserList');
-                        let uSer = new User();
-                        uSer.set('email', email);
-                        uSer.set('key', crypto.createHash('sha512').update(count + 1 + '|' + password).digest("hex"));
-                        uSer.set('id', count + 1);
-                        uSer.save().then((todo) => {
-                            res.cookie('key', crypto.createHash('sha512').update(count + 1 + '|' + password).digest("hex"))
-                            res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                            res.end(JSON.stringify({
-                                status: true,
-                                msg: '注册成功，请前往邮箱验证',
-                                code: 200,
-                                key: crypto.createHash('sha512').update(count + 1 + '|' + password).digest("hex")
-                            }));
-                        }, (error) => {
-                            res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
-                            res.end(JSON.stringify({status: false, msg: '注册失败', code: 400}));
-                        });
+        db.find('userls', '*', `email='${email}'`).then(function (sql) {
+            if (!sql.rows[0]) {
+                db.count('userls').then(function (count) {
+                    num = parseInt(count.rows[0].count) + 1
+                    db.add('userls', {
+                        uid: num,
+                        email: email,
+                        key: crypto.createHash('sha512').update(num.toString() + '|' + password).digest("hex")
+                    }).then(function (sql) {
+                        res.cookie('key', crypto.createHash('sha512').update(num.toString() + '|' + password).digest("hex"))
+                        res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
+                        res.end(JSON.stringify({
+                            status: true,
+                            msg: '注册成功，请前往邮箱验证',
+                            code: 200,
+                            key: crypto.createHash('sha512').update(num.toString() + '|' + password).digest("hex")
+                        }));
+                    }).catch(function (err) {
+                        res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+                        res.end(JSON.stringify({status: false, msg: '查询失败,数据库错误！', code: 500, err: err}))
                     });
+                }).catch(function (err) {
+                    res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+                    res.end(JSON.stringify({status: false, msg: '查询失败,数据库错误！', code: 500, err: err}))
                 });
             } else {
                 res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                 res.end(JSON.stringify({status: false, msg: '用户已注册', code: 400}));
             }
-        })
+        }).catch(function (err) {
+            res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+            res.end(JSON.stringify({status: false, msg: '查询失败,数据库错误！', code: 500, err: err}))
+        });
     } else {
-        res.writeHead(500, {'Content-Type': 'text/html;charset=utf-8'});
-        res.end('<title>500 Sever error</title><style>h1,p {text-align:center;}</style><h1>500 Sever error</h1><hr><p>玄云海</p>');
+        res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify({status: false, msg: '参数错误!', code: 500}));
     }
 }
 
 module.exports = {
-    logon: logon, login: login, auth: auth, Uqueru: Uqueru, fauth:fauth
+    logon: logon, login: login, auth: auth, Uqueru: Uqueru, fauth: fauth
 };

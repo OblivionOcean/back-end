@@ -4,6 +4,7 @@
   "dependencies": {
     "crypto": "^1.0.1",
     "leancloud-storage": "^4.13.2",
-    "simplest-server": "^1.0.3"
+    "pg": "^8.8.0",
+    "simplest-server": "^1.0.6"
   }
 }

@@ -48,26 +48,23 @@ function getList(req, res) {
 function setPost(req, res) {
     User.fauth(req).then(function (response) {
         if (response.data.isjoin) {
+            tags = (typeof req.body.fields.tags=="string") ? req.body.fields.tags:req.body.fields.tags.join(',');
+            category = (typeof req.body.fields.category=="string") ? req.body.fields.category:req.body.fields.category.join(',');
             pid = req.body.fields.pid;
-            // 声明 class
-            const query = new AV.Query('post');
             if (!pid) {
-                var POST = AV.Object.extend('post');
-                var postobj = new POST();
-                let date = new Date();
-                pid = date.getTime();
-                postobj.set('title', req.body.fields.title);
-                postobj.set('text', req.body.fields.text);
-                postobj.set('tags', req.body.fields.tags?req.body.fields.tags:['']);
-                postobj.set('uid', response.data.uid);
-                postobj.set('category', req.body.fields.category?req.body.fields.category:['']);
-                postobj.set('pid', pid);
-                postobj.set('look', 0);
-                postobj.set('avatar', response.data.avatar);
-                postobj.save().then(() => {
+                pid = new Date().getTime()
+                db.add('post', {
+                    title: req.body.fields.title,
+                    text: req.body.fields.text,
+                    tags: tags,
+                    user: req.body.fields.uid,
+                    category: category,
+                    pid: pid,
+                    look: 0
+                }).then(function(sql){
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                     res.end(JSON.stringify({status: true, code: 200, msg: '保存成功', pid: pid}));
-                }, (error) => {
+                }).catch(function (error) {
                     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
                     res.end(JSON.stringify({status: false, code: 400, msg: '保存失败', pid: pid, error: error}));
                 });
@@ -110,21 +107,10 @@ function setPost(req, res) {
 function Post(req, res) {
     res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
     pid = parseInt(req.body.fields.pid?req.body.fields.pid:0)
-    const query = new AV.Query('post');
-    query.equalTo('pid', pid);
-    query.find().then((user) => {
-        if (user.length > 0) {
+    db.select('post','*', 'pid='+pid).then(function (sql) {
+        if (sql.rows[0]) {
             res.end(JSON.stringify({
-                status: true, code: 200, data: {
-                    title: user[0].get('title'),
-                    category: user[0].get('category'),
-                    text: user[0].get('text'),
-                    tags: user[0].get('tags'),
-                    uid: user[0].get('uid'),
-                    pid: user[0].get('pid'),
-                    look: user[0].get('look'),
-                    avatar: user[0].get('avatar')
-                }
+                status: true, code: 200, data: sql.rows[0]
             }));
             const Pl = AV.Object.createWithoutData('post', user[0].id);
             Pl.set('look', user[0].get('look')+1);
@@ -132,6 +118,14 @@ function Post(req, res) {
         } else {
             res.end(JSON.stringify({status: false, msg: '没有这样的文章哦！', code: 404}));
         }
+    }).catch(function (err) {
+        res.writeHead(500, {'Content-Type': 'application/json;charset=utf-8'});
+        res.end(JSON.stringify({
+            status: false,
+            msg: '查询失败,数据库错误！',
+            code: 500,
+            err: (typeof err == 'string') ? err.toString() : err
+        }))
     });
 }
 

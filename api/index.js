@@ -1,18 +1,8 @@
-const Blog = require('./blog.js');
+const Blog = 'k'//require('./blog.js');
 const User = require('./user.js');
 const Project = require('./project.js');
-const AV = require('leancloud-storage');
 const ss = require('simplest-server')
-
-if (process.env.serverURL) {
-    AV.init({
-        appId: process.env.appId, appKey: process.env.appKey, serverURL: process.env.serverURL
-    });
-} else {
-    AV.init({
-        appId: process.env.appId, appKey: process.env.appKey
-    });
-}
+const db = require('./db')
 
 ss.http({
     '404': function (req, res) {
@@ -21,7 +11,18 @@ ss.http({
         res.end();
     },
     'AllRun': function (req, res) {
-        var pattern = new RegExp('/((https|http)?:\\/\\/)[^\\s]+oblivionocean.top/')
+        db.add('log', {
+            time: new Date().getTime(),
+            header: JSON.stringify(req.headers),
+            ip: req.ip,
+            referer: req.headers.referer || '',
+            url: JSON.stringify(req.url),
+            ua: JSON.stringify(req.UA),
+            method: req.method
+        }).catch(function (err) {
+            console.log(err)
+        })
+        var pattern = new RegExp('(https|http):\/\/[^\\s]+oblivionocean.top$')
         res.setHeader("Access-Control-Allow-Credentials", "true");
         if (req.headers.origin && pattern.test(req.headers.origin)) {
             res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
@@ -30,10 +31,19 @@ ss.http({
         }
     },
     'OPTIONS': function (req, res) {
+        db.add('log', {
+            time: new Date().getTime(),
+            header: JSON.stringify(req.headers),
+            ip: req.ip,
+            referer: req.headers.referer || '',
+            url: JSON.stringify(req.url),
+            ua: JSON.stringify(req.UA),
+            method: req.method
+        })
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
         res.setHeader("Access-Control-Allow-Headers", "Content-Type");
         res.setHeader('Access-Control-Allow-Credentials', true);
-        var pattern = new RegExp('/((https|http)?:\\/\\/)[^\\s]+oblivionocean.top/')
+        var pattern = new RegExp('(https|http):\/\/[^\\s]+oblivionocean.top$')
         if (req.headers.origin && pattern.test(req.headers.origin)) {
             res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
         } else {
@@ -43,14 +53,15 @@ ss.http({
         res.end('')
         return false;
     },
-    '/blog/getlist': Blog.getList,
-    '/blog/set': Blog.setPost,
-    '/blog/get': Blog.getPost,
+    ' /blog/getlist': Blog.getList,
+    ' /blog/set': Blog.setPost,
+    ' /blog/get': Blog.getPost,
     '/user/login': User.login,
     '/user/logon': User.logon,
     '/user/user': User.Uqueru,
     '/user/auth': User.auth,
-    '/project/getlist': Project.getList,
-    '/project/set': Project.setProject,
-    '/project/get': Project.getProject
+    ' /project/getlist': Project.getList,
+    ' /project/set': Project.setProject,
+    ' /project/get': Project.getProject,
+    '/dev': dev
 }).listen(80);
